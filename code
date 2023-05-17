@@ -1,0 +1,74 @@
+from scipy.fftpack import fft
+
+import numpy as np
+import matplotlib.pyplot as plt
+import sounddevice as sd
+
+def sigma(F,f,z3,t,Ti):
+    temp = 0
+    x = 0
+    for i in range (0,len(f)):
+        u = np.where((np.logical_and(((t-z3[i]-Ti)<=0),(t-z3[i]>=0))),1,0)
+        temp = (np.sin(2*np.pi*F[i]*t)+np.sin(2*np.pi*f[i]*t))*u
+        x = temp + x
+    return x
+𝑡1 = np.linspace(0,3,12*1024)
+Ti1 = 0.2
+F1 = [220,196,246.93,130.81,220,220,196,220,196,246.93]
+f1 = [440,493.88,440,261.63,392,440,493.88,440,493.88,440]
+T1 = np.linspace(0,3,len(F1))
+
+x = sigma(F1,f1,T1,t1,Ti1)
+
+𝑁 = 3*1024
+𝑓 = np. linspace(0 , 512 , int(𝑁/2))
+
+x_f = fft(x)
+x_f = 2/N * np.abs(x_f [0:np.int(N/2)])
+fn1=np.random.randint(0,512,1)
+fn2 =np.random.randint(0,512,1)
+n = np.sin(2*fn1*np.pi*t1)+np.sin(2*fn2*np.pi*t1)
+xn =x+n
+xnf= fft(xn)
+xnf = 2/N * np.abs(xnf [0:np.int(N/2)])
+
+x_fmax= np.ceil(np.max(x_f))
+
+    
+y = np.where(xnf>x_fmax)
+
+fn1h =y[0][0]
+f1h= ( f[fn1h] ).round()
+fn2h =y[0][1]
+f2h= ( f[fn2h] ).round()
+
+xfil = xn - np.sin(2*f1h*np.pi*t1)-np.sin(2*f2h*np.pi*t1)
+xfi = fft(xfil)
+xfi= 2/N * np.abs(xfi[0:np.int(N/2)])
+
+plt.subplot(6,2,1)
+plt.title('Time Domain Signal')
+plt.plot(t1,x)    
+
+plt.subplot(6,2,3)
+plt.plot(t1,xn)
+
+plt.subplot(6,2,5)
+plt.plot(t1,xfil)
+
+
+plt.subplot(6,2,2)
+plt.title('Frequency Domain Signal')
+plt.plot(f,x_f)
+
+
+plt.subplot(6,2,4)
+plt.plot(f,xnf)
+
+plt.subplot(6,2,6)
+plt.plot(f,xfi)
+
+sd.play(xfil, 3*1024)
+
+
+
